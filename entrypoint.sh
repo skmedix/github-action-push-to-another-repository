@@ -132,7 +132,7 @@ echo "[+] Set directory is safe ($CLONE_DIR)"
 git config --global --add safe.directory "$CLONE_DIR"
 
 echo "[+] Adding git commit"
-git add .
+git add . --ignore-removal
 
 echo "[+] git status:"
 git status
