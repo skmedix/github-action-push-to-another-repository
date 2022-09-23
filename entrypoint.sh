@@ -39,7 +39,7 @@ then
 	chmod 600 "$DEPLOY_KEY_FILE"
 
 	SSH_KNOWN_HOSTS_FILE="$HOME/.ssh/known_hosts"
-	ssh-keyscan -H github.com > "$SSH_KNOWN_HOSTS_FILE"
+	ssh-keyscan -H "$GITHUB_SERVER" > "$SSH_KNOWN_HOSTS_FILE"
 
 	export GIT_SSH_COMMAND="ssh -i "$DEPLOY_KEY_FILE" -o UserKnownHostsFile=$SSH_KNOWN_HOSTS_FILE"
 
@@ -66,7 +66,7 @@ git config --global user.email "$USER_EMAIL"
 git config --global user.name "$USER_NAME"
 
 {
-	git clone --single-branch --branch "$TARGET_BRANCH" "$GIT_CMD_REPOSITORY" "$CLONE_DIR"
+	git clone --single-branch --depth 1 --branch "$TARGET_BRANCH" "$GIT_CMD_REPOSITORY" "$CLONE_DIR"
 } || {
 	echo "::error::Could not clone the destination repository. Command:"
 	echo "::error::git clone --single-branch --branch $TARGET_BRANCH $GIT_CMD_REPOSITORY $CLONE_DIR"
