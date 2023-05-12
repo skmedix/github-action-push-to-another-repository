@@ -15,6 +15,7 @@ DESTINATION_REPOSITORY_USERNAME="${8}"
 TARGET_BRANCH="${9}"
 COMMIT_MESSAGE="${10}"
 TARGET_DIRECTORY="${11}"
+CREATE_TARGET_BRANCH_IF_NEEDED="${12}"
 
 if [ -z "$DESTINATION_REPOSITORY_USERNAME" ]
 then
@@ -60,6 +61,9 @@ CLONE_DIR=$(mktemp -d)
 echo "[+] Git version"
 git --version
 
+echo "[+] Enable git lfs"
+git lfs install
+
 echo "[+] Cloning destination git repository $DESTINATION_REPOSITORY_NAME"
 # Setup git
 git config --global user.email "$USER_EMAIL"
@@ -67,6 +71,15 @@ git config --global user.name "$USER_NAME"
 
 {
 	git clone --single-branch --depth 1 --branch "$TARGET_BRANCH" "$GIT_CMD_REPOSITORY" "$CLONE_DIR"
+} || {
+    if [ "$CREATE_TARGET_BRANCH_IF_NEEDED" = "true" ]
+    then
+        # Default branch of the repository is cloned. Later on the required branch
+	# will be created
+        git clone --single-branch --depth 1 "$GIT_CMD_REPOSITORY" "$CLONE_DIR"
+    else
+        false
+    fi
 } || {
 	echo "::error::Could not clone the destination repository. Command:"
 	echo "::error::git clone --single-branch --branch $TARGET_BRANCH $GIT_CMD_REPOSITORY $CLONE_DIR"
@@ -133,6 +146,12 @@ echo "[+] Set directory is safe ($CLONE_DIR)"
 # Related to https://github.com/cpina/github-action-push-to-another-repository/issues/64 and https://github.com/cpina/github-action-push-to-another-repository/issues/64
 # TODO: review before releasing it as a version
 git config --global --add safe.directory "$CLONE_DIR"
+
+
+if [ "$CREATE_TARGET_BRANCH_IF_NEEDED" = "true" ]
+then
+    git switch -c "$TARGET_BRANCH"
+fi
 
 echo "[+] Adding git commit"
 git add . --ignore-removal
