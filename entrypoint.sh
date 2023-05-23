@@ -65,9 +65,13 @@ echo "[+] Enable git lfs"
 git lfs install
 
 echo "[+] Cloning destination git repository $DESTINATION_REPOSITORY_NAME"
+
 # Setup git
 git config --global user.email "$USER_EMAIL"
 git config --global user.name "$USER_NAME"
+
+# workaround for https://github.com/cpina/github-action-push-to-another-repository/issues/103
+git config --global http.version HTTP/1.1
 
 {
 	git clone --single-branch --depth 1 --branch "$TARGET_BRANCH" "$GIT_CMD_REPOSITORY" "$CLONE_DIR"
@@ -143,14 +147,17 @@ COMMIT_MESSAGE="${COMMIT_MESSAGE/ORIGIN_COMMIT/$ORIGIN_COMMIT}"
 COMMIT_MESSAGE="${COMMIT_MESSAGE/\$GITHUB_REF/$GITHUB_REF}"
 
 echo "[+] Set directory is safe ($CLONE_DIR)"
-# Related to https://github.com/cpina/github-action-push-to-another-repository/issues/64 and https://github.com/cpina/github-action-push-to-another-repository/issues/64
-# TODO: review before releasing it as a version
+# Related to https://github.com/cpina/github-action-push-to-another-repository/issues/64
 git config --global --add safe.directory "$CLONE_DIR"
-
 
 if [ "$CREATE_TARGET_BRANCH_IF_NEEDED" = "true" ]
 then
-    git switch -c "$TARGET_BRANCH"
+    echo "[+] Switch to the TARGET_BRANCH"
+    # || true: if the $TARGET_BRANCH already existed in the destination repo:
+    # it is already the current branch and it cannot be switched to
+    # (it's not needed)
+    # If the branch did not exist: it switches (creating) the branch
+    git switch -c "$TARGET_BRANCH" || true
 fi
 
 echo "[+] Adding git commit"
